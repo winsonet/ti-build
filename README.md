@@ -1,7 +1,7 @@
 ### Getting Started
 ti-build works on Mac OS X 
 
-### Using ti-clean
+### Using ti-build
 $ sh ti-build-ios-adhoc.sh --help
 
 $ sh ti-build-ios-simulator.sh --help
