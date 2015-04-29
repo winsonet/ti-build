@@ -76,7 +76,7 @@ get_device_id ()
 
 show_help ()
 {
-    echo "usage: ti-build-ios-adhoc.sh [options]"
+    echo "usage: ti-build-ios-simulator.sh [options]"
     echo "       -gs=<value>, --get-sdk=<value>\t\tdisplay list sdk version"
     echo "       -s=<value>, --sdk=<value>\t\tthe sdk version [$(echo $(get_sdks) | sed 's/|#|/, /g')]"
     echo "       -gdn=<value>, --get-device-name=<value>\tdisplay list device name"
@@ -97,19 +97,19 @@ case $i in
     ARG_SDK="${i#*=}"
     shift
     ;;
-    -gdn=*|--get-deveice-name=*)
+    -gdn=*|--get-device-name=*)
     ARG_GET_DEVICE_NAME="${i#*=}"
     shift
     ;;
-    -dn=*|--deveice-name=*)
+    -dn=*|--device-name=*)
     ARG_DEVICE_NAME="${i#*=}"
     shift
     ;;
-    -gdi=*|--get-deveice-id=*)
+    -gdi=*|--get-device-id=*)
     ARG_GET_DEVICE_ID="${i#*=}"
     shift
     ;;
-    -i=*|--deveice-id=*)
+    -i=*|--device-id=*)
     ARG_DEVICE_ID="${i#*=}"
     shift
     ;;
@@ -143,10 +143,17 @@ elif is_sdk "${ARG_SDK}" && [[ "${ARG_GET_DEVICE_NAME}" != "" ]]; then
 elif is_sdk "${ARG_SDK}" && is_device_name "${ARG_SDK}" "${ARG_DEVICE_NAME}"; then
     echo $(get_device_id "${ARG_SDK}" "${ARG_DEVICE_NAME}")
     exit
-elif [[ "${ARG_SDK}" == "" ]] || [[ "${ARG_DEVICE_ID}" == "" ]] || [[ "${ARG_DIR}" == "" ]]; then
-    show_help
-    exit
 elif ! is_dir "${ARG_DIR}"; then
     echo "[${FONT_RED}FAIL${FONT_NO_COLOR}] dir: ${ARG_DIR}"
     exit
 fi
+
+SDK=$(sed -n 's|\s*<sdk-version>\(.*\)</sdk-version>|\1|p' "${ARG_DIR}/tiapp.xml")
+SDK=$(echo ${SDK} | sed 's/ //g')
+
+if [[ "${SDK}" == "" ]]; then
+    echo "[${FONT_RED}FAIL${FONT_NO_COLOR}] the sdk is undefined."
+    exit
+fi
+
+${SHELL_TI} build --project-dir "${ARG_DIR}" --platform "ios" --sdk "${SDK}"  --sim-version "${ARG_SDK}" --device-id "${ARG_DEVICE_ID}"
