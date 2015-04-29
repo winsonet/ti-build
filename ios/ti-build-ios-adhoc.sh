@@ -295,5 +295,3 @@ fi
 if is_file "${OUTPUTDIR}/${APPNAME}.ipa"; then
     mv "${OUTPUTDIR}/${APPNAME}.ipa" "${OUTPUTDIR}/${TIMESTAMP}-${APPNAME}.ipa"
 fi
-
-echo "success"
