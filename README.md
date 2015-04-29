@@ -1,2 +1,9 @@
-# ti-build
-The build tools for Titanium Appcelerator 
+### Getting Started
+ti-build works on Mac OS X 
+
+### Using ti-clean
+$ sh ti-build-ios-adhoc.sh --help
+$ sh ti-build-ios-simulator.sh --help
+
+### License
+ti-build is released under the MIT license.
