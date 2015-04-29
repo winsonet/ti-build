@@ -107,25 +107,20 @@ timestamp ()
 show_help ()
 {
     echo "usage: ti-build-ios-adhoc.sh [options]"
+    echo "       -gp=<value>, --get-profile-name=<value>\tdisplay list profile name"
     echo "       -p=<value>, --profile-name=<value>\tthe profile name"
-    echo "       -gf=<value>, --get-device-family=<value>\tdisplay list device family"
-    echo "       -f=<value>, --device-family=<value>\tthe device family [$(echo $(get_device_family) | sed 's/ /, /g')]"
     echo "       -d=<value>, --dir=<value>\t\tthe directory titanium project"
 }
 
 for i in "$@"
 do
 case $i in
+    -gp=*|--get-profile-name=*)
+    ARG_GET_PROFILE_NAME="${i#*=}"
+    shift
+    ;;
     -p=*|--profile-name=*)
     ARG_PROFILE_NAME="${i#*=}"
-    shift
-    ;;
-    -gf=*|--get-device-family=*)
-    ARG_GET_DEVICE_FAMILY="${i#*=}"
-    shift
-    ;;
-    -f=*|--device-family=*)
-    ARG_DEVICE_FAMILY="${i#*=}"
     shift
     ;;
     -d=*|--dir=*)
@@ -149,17 +144,24 @@ hash ${SHELL_NODE} > /dev/null 2>&1 || {
     exit
 }
 
-if [[ "${ARG_GET_DEVICE_FAMILY}" != "" ]]; then
-    echo $(get_device_family)
-    exit
-elif [[ "${ARG_DIR}" == "" ]] || [[ "${ARG_DEVICE_FAMILY}" == "" ]] || [[ "${ARG_PROFILE_NAME}" == "" ]]; then
+if [[ "${ARG_DIR}" == "" && "${ARG_PROFILE_NAME}" == "" ]] || [[ "${ARG_DIR}" == "" && "${ARG_GET_PROFILE_NAME}" == "" ]]; then
     show_help
     exit
 elif ! is_dir "${ARG_DIR}"; then
     echo "[${FONT_RED}FAIL${FONT_NO_COLOR}] dir: ${ARG_DIR}"
     exit
-elif ! is_device_family "${ARG_DEVICE_FAMILY}"; then
-    echo "[${FONT_RED}FAIL${FONT_NO_COLOR}] the device family is invalid. [$(echo $(get_device_family) | sed 's/ /, /g')]"
+elif [[ "${ARG_GET_PROFILE_NAME}" != "" ]]; then
+    FILE_JSON="${ARG_DIR}/ti-config.json"
+
+    if is_file "${ARG_DIR}/ti-config.json"; then
+        CONTENT_JSON=$(cat "${FILE_JSON}")
+
+        if is_json "${CONTENT_JSON}"; then
+            CONTENT=$(${SHELL_NODE} -pe "var profiles = [];var json = JSON.parse(process.argv[1]).build.ios.adhoc;for(var i in json){profiles.push(i)};process.stdout.write(profiles.join(' '));" "${CONTENT_JSON}")
+            echo ${CONTENT:0:$((${#CONTENT} - 4))}
+        fi
+    fi
+
     exit
 fi
 
@@ -174,6 +176,15 @@ CONTENT_JSON=$(cat "${FILE_JSON}")
 
 if ! is_json "${CONTENT_JSON}"; then
     echo "[${FONT_RED}FAIL${FONT_NO_COLOR}] the json file format invalid."
+    exit
+fi
+
+DEVICEFAMILY=$(${SHELL_NODE} -pe "JSON.parse(process.argv[1]).build.ios.adhoc.${ARG_PROFILE_NAME}.devicefamily" "${CONTENT_JSON}")
+if [[ "${DEVICEFAMILY}" == "undefined" ]]; then
+    echo "[${FONT_RED}FAIL${FONT_NO_COLOR}] the devicefamily is undefined."
+    exit
+elif ! is_device_family "${DEVICEFAMILY}"; then
+    echo "[${FONT_RED}FAIL${FONT_NO_COLOR}] the devicefamily is invalid. [$(echo $(get_device_family) | sed 's/ /, /g')]"
     exit
 fi
 
@@ -276,9 +287,9 @@ if [[ "${APPICON}" == "true" ]]; then
 fi
 
 if [[ "${JSMINIFY}" == "true" ]]; then
-    ${SHELL_TI} build --project-dir "${ARG_DIR}" --platform "ios" --sdk "${SDK}" --device-family "iphone" --tall --retina --distribution-name "${DISTRIBUTIONNAME}" --pp-uuid "${PROFILEID}" --target dist-adhoc --output-dir "${OUTPUTDIR}"  --skip-js-minify
+    ${SHELL_TI} build --project-dir "${ARG_DIR}" --platform "ios" --sdk "${SDK}" --device-family "${DEVICEFAMILY}" --tall --retina --distribution-name "${DISTRIBUTIONNAME}" --pp-uuid "${PROFILEID}" --target dist-adhoc --output-dir "${OUTPUTDIR}"  --skip-js-minify
 else
-    ${SHELL_TI} build --project-dir "${ARG_DIR}" --platform "ios" --sdk "${SDK}" --device-family "iphone" --tall --retina --distribution-name "${DISTRIBUTIONNAME}" --pp-uuid "${PROFILEID}" --target dist-adhoc --output-dir "${OUTPUTDIR}"
+    ${SHELL_TI} build --project-dir "${ARG_DIR}" --platform "ios" --sdk "${SDK}" --device-family "${DEVICEFAMILY}" --tall --retina --distribution-name "${DISTRIBUTIONNAME}" --pp-uuid "${PROFILEID}" --target dist-adhoc --output-dir "${OUTPUTDIR}"
 fi
 
 if is_file "${OUTPUTDIR}/${APPNAME}.ipa"; then
