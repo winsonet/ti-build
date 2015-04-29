@@ -85,7 +85,7 @@ plist_templete ()
 
 get_device_family ()
 {
-    echo "iphone ipad universal"
+    echo "iphone|#|ipad|#|universal"
 }
 
 is_device_family () 
@@ -158,7 +158,7 @@ elif [[ "${ARG_GET_PROFILE_NAME}" != "" ]]; then
 
         if is_json "${CONTENT_JSON}"; then
             CONTENT=$(${SHELL_NODE} -pe "var profiles = [];var json = JSON.parse(process.argv[1]).build.ios.adhoc;for(var i in json){profiles.push(i)};process.stdout.write(profiles.join(' '));" "${CONTENT_JSON}")
-            echo ${CONTENT:0:$((${#CONTENT} - 4))}
+            echo ${CONTENT:0:$((${#CONTENT} - 4))} | sed 's/ /|#|/g'
         fi
     fi
 
