@@ -1,0 +1,152 @@
+#!/bin/bash
+PATH_HERE=`pwd`
+FONT_RED='\033[0;31m'
+FONT_NO_COLOR='\033[0m'
+SHELL_TI=`which ti`
+SHELL_XCRUN=`which xcrun`
+
+is_file ()
+{
+    if [ -f "$1" ] ; then
+        return 0
+    fi
+
+    return 1
+}
+
+is_dir ()
+{
+    if [[ -d "$1" && ! -L "$1" ]] ; then
+        return 0
+    fi
+
+    return 1
+}
+
+get_sdks ()
+{
+    echo $(${SHELL_XCRUN} simctl list | grep '(com.apple.CoreSimulator.SimRuntime.iOS-[0-9]-[0-9])' | grep -v '(unavailable, runtime path not found)' | awk '{print $3}' | sed 's/(//g') | sed 's/ /|#|/g'
+}
+
+is_sdk () 
+{
+    SDKS=$(get_sdks)
+
+    if [[ "$1" != "" && ":${SDKS}:" == *"$1"* ]]; then
+        return 0
+    fi
+
+    return 1
+}
+
+get_device_name ()
+{
+    VERSION=$(${SHELL_XCRUN} simctl list | grep '(com.apple.CoreSimulator.SimRuntime.iOS-[0-9]-[0-9])' | grep "($1 - " | grep -v '(unavailable, runtime path not found)' | awk '{print $2}')
+
+    CONTENT=$(${SHELL_XCRUN} simctl list)
+    CONTENT=$(echo ${CONTENT} --)
+    CONTENT=$(echo ${CONTENT} | egrep -o "\\-\\- iOS ${VERSION} \\-\\- (.*?) \\-\\-")
+    CONTENT=$(echo ${CONTENT} | sed "s/-- iOS ${VERSION} -- //g" | sed 's/ --//g' | sed 's/(Shutdown)/,/g' | sed 's/(Booted)/,/g' | sed 's/ , /,/g' | sed 's/ ,//g' | sed 's/ ([0-9a-fA-F]\{8\}-[0-9a-fA-F]\{4\}-[0-9a-fA-F]\{4\}-[0-9a-fA-F]\{4\}-[0-9a-fA-F]\{12\})//g')
+    CONTENT=$(echo ${CONTENT} | sed 's/,/|#|/g')
+    echo "${CONTENT}"
+}
+
+is_device_name () 
+{
+    DEVICE_NAME=$(get_device_name $1)
+
+    if [[ "$1" != "" && "$2" != "" && ":${DEVICE_NAME}:" == *"$2"* ]]; then
+        return 0
+    fi
+
+    return 1
+}
+
+get_device_id ()
+{
+    VERSION=$(${SHELL_XCRUN} simctl list | grep '(com.apple.CoreSimulator.SimRuntime.iOS-[0-9]-[0-9])' | grep "($1 - " | grep -v '(unavailable, runtime path not found)' | awk '{print $2}')
+
+    CONTENT=$(${SHELL_XCRUN} simctl list)
+    CONTENT=$(echo ${CONTENT} --)
+    CONTENT=$(echo ${CONTENT} | egrep -o "\\-\\- iOS ${VERSION} \\-\\- (.*?) \\-\\-")
+    CONTENT=$(echo ${CONTENT} | sed "s/-- iOS ${VERSION} -- //g" | sed 's/ --//g' | sed 's/(Shutdown)/,/g' | sed 's/(Booted)/,/g' | sed 's/ , /,/g' | sed 's/ ,//g' | grep -o "$2 ([0-9a-fA-F]\{8\}-[0-9a-fA-F]\{4\}-[0-9a-fA-F]\{4\}-[0-9a-fA-F]\{4\}-[0-9a-fA-F]\{12\})")
+    CONTENT=$(echo ${CONTENT} | grep -o '[0-9a-fA-F]\{8\}-[0-9a-fA-F]\{4\}-[0-9a-fA-F]\{4\}-[0-9a-fA-F]\{4\}-[0-9a-fA-F]\{12\}')
+    echo "${CONTENT}"
+}
+
+show_help ()
+{
+    echo "usage: ti-build-ios-adhoc.sh [options]"
+    echo "       -gs=<value>, --get-sdk=<value>\t\tdisplay list sdk version"
+    echo "       -s=<value>, --sdk=<value>\t\tthe sdk version [$(echo $(get_sdks) | sed 's/|#|/, /g')]"
+    echo "       -gdn=<value>, --get-device-name=<value>\tdisplay list device name"
+    echo "       -dn=<value>, --device-name=<value>\tthe device name"
+    echo "       -gdi=<value>, --get-device-id=<value>\tdisplay list device id"
+    echo "       -di=<value>, --device-id=<value>\t\tthe device id"
+    echo "       -d=<value>, --dir=<value>\t\tthe directory titanium project"
+}
+
+for i in "$@"
+do
+case $i in
+    -gs=*|--get-sdk=*)
+    ARG_GET_SDK="${i#*=}"
+    shift
+    ;;
+    -s=*|--sdk=*)
+    ARG_SDK="${i#*=}"
+    shift
+    ;;
+    -gdn=*|--get-deveice-name=*)
+    ARG_GET_DEVICE_NAME="${i#*=}"
+    shift
+    ;;
+    -dn=*|--deveice-name=*)
+    ARG_DEVICE_NAME="${i#*=}"
+    shift
+    ;;
+    -gdi=*|--get-deveice-id=*)
+    ARG_GET_DEVICE_ID="${i#*=}"
+    shift
+    ;;
+    -i=*|--deveice-id=*)
+    ARG_DEVICE_ID="${i#*=}"
+    shift
+    ;;
+    -d=*|--dir=*)
+    ARG_DIR="${i#*=}"
+    shift
+    ;;
+    *)
+        show_help
+        exit
+    ;;
+esac
+done
+
+hash ${SHELL_TI} > /dev/null 2>&1 || {
+    echo "[${FONT_RED}FAIL${FONT_NO_COLOR}] ti not installed"
+    exit
+}
+
+hash ${SHELL_XCRUN} > /dev/null 2>&1 || {
+    echo "[${FONT_RED}FAIL${FONT_NO_COLOR}] xcrun not installed"
+    exit
+}
+
+if [[ "${ARG_GET_SDK}" != "" ]]; then
+    echo $(get_sdks)
+    exit
+elif is_sdk "${ARG_SDK}" && [[ "${ARG_GET_DEVICE_NAME}" != "" ]]; then
+    echo $(get_device_name "${ARG_SDK}")
+    exit
+elif is_sdk "${ARG_SDK}" && is_device_name "${ARG_SDK}" "${ARG_DEVICE_NAME}"; then
+    echo $(get_device_id "${ARG_SDK}" "${ARG_DEVICE_NAME}")
+    exit
+elif [[ "${ARG_SDK}" == "" ]] || [[ "${ARG_DEVICE_ID}" == "" ]] || [[ "${ARG_DIR}" == "" ]]; then
+    show_help
+    exit
+elif ! is_dir "${ARG_DIR}"; then
+    echo "[${FONT_RED}FAIL${FONT_NO_COLOR}] dir: ${ARG_DIR}"
+    exit
+fi
