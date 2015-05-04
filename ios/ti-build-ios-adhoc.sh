@@ -106,7 +106,8 @@ timestamp ()
 
 show_help ()
 {
-    echo "usage: ti-build-ios-adhoc.sh [options]"
+    me="$(basename "$(test -L "$0" && readlink "$0" || echo "$0")")"
+    echo "usage: ${me} [options]"
     echo "       -gp=<value>, --get-profile-name=<value>\tdisplay list profile name"
     echo "       -p=<value>, --profile-name=<value>\tthe profile name"
     echo "       -d=<value>, --dir=<value>\t\tthe directory titanium project"

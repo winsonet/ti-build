@@ -76,7 +76,8 @@ get_device_id ()
 
 show_help ()
 {
-    echo "usage: ti-build-ios-simulator.sh [options]"
+    me="$(basename "$(test -L "$0" && readlink "$0" || echo "$0")")"
+    echo "usage: ${me} [options]"
     echo "       -gs=<value>, --get-sdk=<value>\t\tdisplay list sdk version"
     echo "       -s=<value>, --sdk=<value>\t\tthe sdk version [$(echo $(get_sdks) | sed 's/|#|/, /g')]"
     echo "       -gdn=<value>, --get-device-name=<value>\tdisplay list device name"
