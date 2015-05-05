@@ -22,9 +22,63 @@ is_dir ()
     return 1
 }
 
+get_device_id ()
+{
+    # echo $1 $2
+    DEVICE_MODELS=$(get_models)
+    DEVICE_IDS=$(get_device_ids)
+
+    IFS='|#|' read -a DEVICE_MODELS <<< "${DEVICE_MODELS}"
+    IFS='|#|' read -a DEVICE_IDS <<< "${DEVICE_IDS}"
+
+    for DEVICE_MODEL in "${DEVICE_MODELS[@]}"
+    do
+        if [[ "${DEVICE_MODEL}" != "" ]]; then
+            for DEVICE_ID in "${DEVICE_IDS[@]}"
+            do
+                if [[ "" ]]; then
+                fi
+            done
+
+        fi
+    done
+}
+
+get_device_ids ()
+{
+    # get device id is text string type one line.
+    echo $(${SHELL_ADB} devices -l | grep 'usb' | awk '{print $1}') | sed 's/ /|#|/g'
+}
+
 get_models ()
 {
-    echo $(${SHELL_ADB} devices -l)
+    MODELS=()
+    DEVICE_IDS=$(get_device_ids)
+
+    # get device id from get_device_id function and convert text to array.
+    IFS='|#|' read -a DEVICE_IDS <<< "${DEVICE_IDS}"
+    
+    for DEVICE_ID in "${DEVICE_IDS[@]}"
+    do
+        if [[ "${DEVICE_ID}" != "" ]]; then
+            MODEL=$(${SHELL_ADB} -s ${DEVICE_ID} shell getprop ro.product.model)
+
+            # test case device no device prease open omment
+            # MODEL=""
+
+            # check case device no model
+            if [[ "${MODEL}" == "" ]]; then
+                MODEL=$(${SHELL_ADB} -s ${DEVICE_ID} shell getprop ro.product.name)
+            fi
+
+            MODEL=$(echo ${MODEL:0:(${#MODEL}-1)})
+            MODELS+=("${MODEL}")
+        fi
+    done
+
+    MODELS=$(echo "${MODELS[@]}" | sed 's/ /|#|/g')
+
+    echo "${MODELS}"
 }
 
 show_help ()
@@ -40,4 +94,13 @@ show_help ()
     echo "       -d=<value>, --dir=<value>\t\tthe directory titanium project"
 }
 
-echo $(get_models)
+hash ${SHELL_ADB} > /dev/null 2>&1 || {
+    echo "[${FONT_RED}FAIL${FONT_NO_COLOR}] adb not installed"
+    exit
+}
+
+# get_models
+
+get_device_id
+
+# $(get_device_id "GT-I9300T" "GT-I9300T")
