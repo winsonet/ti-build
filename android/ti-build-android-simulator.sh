@@ -24,24 +24,29 @@ is_dir ()
 
 get_device_id ()
 {
-    # echo $1 $2
-    DEVICE_MODELS=$(get_models)
+    MODEL=$1
     DEVICE_IDS=$(get_device_ids)
+    ID=""
 
-    IFS='|#|' read -a DEVICE_MODELS <<< "${DEVICE_MODELS}"
     IFS='|#|' read -a DEVICE_IDS <<< "${DEVICE_IDS}"
 
-    for DEVICE_MODEL in "${DEVICE_MODELS[@]}"
-    do
-        if [[ "${DEVICE_MODEL}" != "" ]]; then
-            for DEVICE_ID in "${DEVICE_IDS[@]}"
-            do
-                if [[ "" ]]; then
-                fi
-            done
+    # echo ${DEVICE_IDS[@]}
 
+    for DEVICE_ID in "${DEVICE_IDS[@]}"
+    do
+        if [[ "${DEVICE_ID}" != "" ]]; then
+            # echo "${DEVICE_ID}"
+            DEVICE_MODEL=$(${SHELL_ADB} -s ${DEVICE_ID} shell getprop ro.product.model)
+            DEVICE_MODEL=$(echo ${DEVICE_MODEL:0:(${#DEVICE_MODEL}-1)})
+            # echo "${DEVICE_MODEL}"
+            echo "${MODEL} -> ${DEVICE_MODEL}"
+            if [[ "${MODEL}" == "${DEVICE_MODEL}" ]]; then
+                ID=$(${SHELL_ADB} -s ${DEVICE_ID} shell getprop ro.serialno)
+            fi
         fi
     done
+
+    echo "${ID}"
 }
 
 get_device_ids ()
@@ -63,14 +68,6 @@ get_models ()
         if [[ "${DEVICE_ID}" != "" ]]; then
             MODEL=$(${SHELL_ADB} -s ${DEVICE_ID} shell getprop ro.product.model)
 
-            # test case device no device prease open omment
-            # MODEL=""
-
-            # check case device no model
-            if [[ "${MODEL}" == "" ]]; then
-                MODEL=$(${SHELL_ADB} -s ${DEVICE_ID} shell getprop ro.product.name)
-            fi
-
             MODEL=$(echo ${MODEL:0:(${#MODEL}-1)})
             MODELS+=("${MODEL}")
         fi
@@ -85,7 +82,7 @@ show_help ()
 {
     me="$(basename "$(test -L "$0" && readlink "$0" || echo "$0")")"
     echo "usage: ${me} [options]"
-    echo "       -gs=<value>, --get-sdk=<value>\t\tdisplay list sdk version"
+    echo "       -gs=<value>, --get-model=<value>\t\tdisplay list sdk version"
     echo "       -s=<value>, --sdk=<value>\t\tthe sdk version [$(echo $(get_sdks) | sed 's/|#|/, /g')]"
     echo "       -gdn=<value>, --get-device-name=<value>\tdisplay list device name"
     echo "       -dn=<value>, --device-name=<value>\tthe device name"
@@ -101,6 +98,33 @@ hash ${SHELL_ADB} > /dev/null 2>&1 || {
 
 # get_models
 
-get_device_id
+# get_device_id "D2302"
 
 # $(get_device_id "GT-I9300T" "GT-I9300T")
+
+for i in "$@"
+do
+case $i in
+    -gs=*|--get-model=*)
+    ARG_GET_MODEL="${i#*=}"
+    shift
+    ;;
+    -di=*|--device-id=*)
+    ARG_GET_ID="${i#*=}"
+    shift
+    ;;
+    *)
+        show_help
+        exit
+    ;;
+esac
+done
+
+if [[ "${ARG_GET_MODEL}" != "" ]]; then
+    echo $(get_models)
+    exit
+elif [[ "${ARG_GET_ID}" != "" ]]; then
+    echo $(get_device_id ${ARG_GET_ID})
+    exit
+fi
+
