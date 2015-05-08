@@ -119,10 +119,10 @@ show_help ()
 {
     me="$(basename "$(test -L "$0" && readlink "$0" || echo "$0")")"
     echo "usage: ${me} [options]"
-    echo "       -di=<value>, --device-id=<value>\t\t\t\tdisplay list device name"
+    echo "       -di=<value>, --device-id=<value>\t\t\t\tdisplay list device id"
     echo "       -gm=<value>, --get-model=<value>\t\t\t\tthe device model"
-    echo "       -gdiwm=<value>, --get-device-id-with-model=<value>\tdisplay device"
-    echo "       -gmwdi=<value>, ---get-model-with-device-id=<value>\tdisplay model"
+    echo "       -gdiwm=<value>, --get-device-id-with-model=<value>\tdisplay get device id with model"
+    echo "       -gmwdi=<value>, ---get-model-with-device-id=<value>\tdisplay get model with device id"
     echo "       -d=<value>, --dir=<value>\t\t\t\tthe directory titanium project"
 }
 
