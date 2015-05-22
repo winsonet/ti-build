@@ -1,7 +1,5 @@
 #!/bin/bash
 PATH_HERE=`pwd`
-FONT_RED='\033[0;31m'
-FONT_NO_COLOR='\033[0m'
 SHELL_TI=`which ti`
 SHELL_XCRUN=`which xcrun`
 
@@ -126,12 +124,12 @@ esac
 done
 
 hash ${SHELL_TI} > /dev/null 2>&1 || {
-    echo "[${FONT_RED}FAIL${FONT_NO_COLOR}] ti not installed"
+    echo "[FAIL] ti not installed"
     exit
 }
 
 hash ${SHELL_XCRUN} > /dev/null 2>&1 || {
-    echo "[${FONT_RED}FAIL${FONT_NO_COLOR}] xcrun not installed"
+    echo "[FAIL] xcrun not installed"
     exit
 }
 
@@ -145,7 +143,7 @@ elif is_sdk "${ARG_SDK}" && is_device_name "${ARG_SDK}" "${ARG_DEVICE_NAME}"; th
     echo $(get_device_id "${ARG_SDK}" "${ARG_DEVICE_NAME}")
     exit
 elif ! is_dir "${ARG_DIR}"; then
-    echo "[${FONT_RED}FAIL${FONT_NO_COLOR}] dir: ${ARG_DIR}"
+    echo "[FAIL] dir: ${ARG_DIR}"
     exit
 fi
 
@@ -153,7 +151,7 @@ SDK=$(sed -n 's|\s*<sdk-version>\(.*\)</sdk-version>|\1|p' "${ARG_DIR}/tiapp.xml
 SDK=$(echo ${SDK} | sed 's/ //g')
 
 if [[ "${SDK}" == "" ]]; then
-    echo "[${FONT_RED}FAIL${FONT_NO_COLOR}] the sdk is undefined."
+    echo "[FAIL] the sdk is undefined."
     exit
 fi
 

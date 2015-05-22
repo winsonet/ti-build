@@ -1,7 +1,5 @@
 #!/bin/bash
 PATH_HERE=`pwd`
-FONT_RED='\033[0;31m'
-FONT_NO_COLOR='\033[0m'
 SHELL_TI=`which ti`
 SHELL_NODE=`which node`
 
@@ -108,19 +106,19 @@ show_help ()
 {
     me="$(basename "$(test -L "$0" && readlink "$0" || echo "$0")")"
     echo "usage: ${me} [options]"
-    echo "       -gp=<value>, --get-profile-name=<value>\tdisplay list profile name"
-    echo "       -p=<value>, --profile-name=<value>\tthe profile name"
+    echo "       -gpn=<value>, --get-profile-name=<value>\tdisplay list profile name"
+    echo "       -pn=<value>, --profile-name=<value>\tthe profile name"
     echo "       -d=<value>, --dir=<value>\t\tthe directory titanium project"
 }
 
 for i in "$@"
 do
 case $i in
-    -gp=*|--get-profile-name=*)
+    -gpn=*|--get-profile-name=*)
     ARG_GET_PROFILE_NAME="${i#*=}"
     shift
     ;;
-    -p=*|--profile-name=*)
+    -pn=*|--profile-name=*)
     ARG_PROFILE_NAME="${i#*=}"
     shift
     ;;
@@ -136,12 +134,12 @@ esac
 done
 
 hash ${SHELL_TI} > /dev/null 2>&1 || {
-    echo "[${FONT_RED}FAIL${FONT_NO_COLOR}] ti not installed"
+    echo "[FAIL] ti not installed"
     exit
 }
 
 hash ${SHELL_NODE} > /dev/null 2>&1 || {
-    echo "[${FONT_RED}FAIL${FONT_NO_COLOR}] node not installed"
+    echo "[FAIL] node not installed"
     exit
 }
 
@@ -149,7 +147,7 @@ if [[ "${ARG_DIR}" == "" && "${ARG_PROFILE_NAME}" == "" ]] || [[ "${ARG_DIR}" ==
     show_help
     exit
 elif ! is_dir "${ARG_DIR}"; then
-    echo "[${FONT_RED}FAIL${FONT_NO_COLOR}] dir: ${ARG_DIR}"
+    echo "[FAIL] dir: ${ARG_DIR}"
     exit
 elif [[ "${ARG_GET_PROFILE_NAME}" != "" ]]; then
     FILE_JSON="${ARG_DIR}/ti-config.json"
@@ -169,81 +167,81 @@ fi
 FILE_JSON="${ARG_DIR}/ti-config.json"
 
 if ! is_file "${ARG_DIR}/ti-config.json"; then
-    echo "[${FONT_RED}FAIL${FONT_NO_COLOR}] file: ${FILE_JSON}"
+    echo "[FAIL] file: ${FILE_JSON}"
     exit
 fi
 
 CONTENT_JSON=$(cat "${FILE_JSON}")
 
 if ! is_json "${CONTENT_JSON}"; then
-    echo "[${FONT_RED}FAIL${FONT_NO_COLOR}] the json file format invalid."
+    echo "[FAIL] the json file format invalid."
     exit
 fi
 
 DEVICEFAMILY=$(${SHELL_NODE} -pe "JSON.parse(process.argv[1]).build.ios.adhoc.${ARG_PROFILE_NAME}.devicefamily" "${CONTENT_JSON}")
 if [[ "${DEVICEFAMILY}" == "undefined" ]]; then
-    echo "[${FONT_RED}FAIL${FONT_NO_COLOR}] the devicefamily is undefined."
+    echo "[FAIL] the devicefamily is undefined."
     exit
 elif ! is_device_family "${DEVICEFAMILY}"; then
-    echo "[${FONT_RED}FAIL${FONT_NO_COLOR}] the devicefamily is invalid. [$(echo $(get_device_family) | sed 's/ /, /g')]"
+    echo "[FAIL] the devicefamily is invalid. [$(echo $(get_device_family) | sed 's/ /, /g')]"
     exit
 fi
 
 DISTRIBUTIONNAME=$(${SHELL_NODE} -pe "JSON.parse(process.argv[1]).build.ios.adhoc.${ARG_PROFILE_NAME}.distributionname" "${CONTENT_JSON}")
 if [[ "${DISTRIBUTIONNAME}" == "undefined" ]]; then
-    echo "[${FONT_RED}FAIL${FONT_NO_COLOR}] the distributionname is undefined."
+    echo "[FAIL] the distributionname is undefined."
     exit
 fi
 
 PROFILEID=$(${SHELL_NODE} -pe "JSON.parse(process.argv[1]).build.ios.adhoc.${ARG_PROFILE_NAME}.profileid" "${CONTENT_JSON}")
 if [[ "${PROFILEID}" == "undefined" ]]; then
-    echo "[${FONT_RED}FAIL${FONT_NO_COLOR}] the profileid is undefined."
+    echo "[FAIL] the profileid is undefined."
     exit
 fi
 
 IPAURL=$(${SHELL_NODE} -pe "JSON.parse(process.argv[1]).build.ios.adhoc.${ARG_PROFILE_NAME}.ipaurl" "${CONTENT_JSON}")
 if [[ "${IPAURL}" == "undefined" ]]; then
-    echo "[${FONT_RED}FAIL${FONT_NO_COLOR}] the ipaurl is undefined."
+    echo "[FAIL] the ipaurl is undefined."
     exit
 fi
 
 OUTPUTDIR=$(${SHELL_NODE} -pe "JSON.parse(process.argv[1]).build.ios.adhoc.${ARG_PROFILE_NAME}.outputdir" "${CONTENT_JSON}")
 
 if [[ "${OUTPUTDIR}" == "undefined" ]]; then
-    echo "[${FONT_RED}FAIL${FONT_NO_COLOR}] the outputdir is undefined."
+    echo "[FAIL] the outputdir is undefined."
     exit
 else
     OUTPUTDIR=${OUTPUTDIR/\$\{HOME\}/$HOME}
     if ! is_dir "${OUTPUTDIR}"; then
-        echo "[${FONT_RED}FAIL${FONT_NO_COLOR}] output dir: ${OUTPUTDIR}"
+        echo "[FAIL] output dir: ${OUTPUTDIR}"
         exit
     fi
 fi
 
 JSMINIFY=$(${SHELL_NODE} -pe "JSON.parse(process.argv[1]).build.ios.adhoc.${ARG_PROFILE_NAME}.jsminify" "${CONTENT_JSON}")
 if [[ "${JSMINIFY}" == "undefined" ]]; then
-    echo "[${FONT_RED}FAIL${FONT_NO_COLOR}] the jsminify is undefined."
+    echo "[FAIL] the jsminify is undefined."
     exit
 elif [[ "${JSMINIFY}" != "false" && "${JSMINIFY}" != "true" ]]; then
-    echo "[${FONT_RED}FAIL${FONT_NO_COLOR}] the jsminify is invalid. [false, true]"
+    echo "[FAIL] the jsminify is invalid. [false, true]"
     exit
 fi
 
 PLIST=$(${SHELL_NODE} -pe "JSON.parse(process.argv[1]).build.ios.adhoc.${ARG_PROFILE_NAME}.plist" "${CONTENT_JSON}")
 if [[ "${PLIST}" == "undefined" ]]; then
-    echo "[${FONT_RED}FAIL${FONT_NO_COLOR}] the plist is undefined."
+    echo "[FAIL] the plist is undefined."
     exit
 elif [[ "${PLIST}" != "false" && "${PLIST}" != "true" ]]; then
-    echo "[${FONT_RED}FAIL${FONT_NO_COLOR}] the plist is invalid. [false, true]"
+    echo "[FAIL] the plist is invalid. [false, true]"
     exit
 fi
 
 APPICON=$(${SHELL_NODE} -pe "JSON.parse(process.argv[1]).build.ios.adhoc.${ARG_PROFILE_NAME}.appicon" "${CONTENT_JSON}")
 if [[ "${APPICON}" == "undefined" ]]; then
-    echo "[${FONT_RED}FAIL${FONT_NO_COLOR}] the appicon is undefined."
+    echo "[FAIL] the appicon is undefined."
     exit
 elif [[ "${APPICON}" != "false" && "${APPICON}" != "true" ]]; then
-    echo "[${FONT_RED}FAIL${FONT_NO_COLOR}] the appicon is invalid. [false, true]"
+    echo "[FAIL] the appicon is invalid. [false, true]"
     exit
 fi
 
@@ -251,7 +249,7 @@ SDK=$(sed -n 's|\s*<sdk-version>\(.*\)</sdk-version>|\1|p' "${ARG_DIR}/tiapp.xml
 SDK=$(echo ${SDK} | sed 's/ //g')
 
 if [[ "${SDK}" == "" ]]; then
-    echo "[${FONT_RED}FAIL${FONT_NO_COLOR}] the sdk is undefined."
+    echo "[FAIL] the sdk is undefined."
     exit
 fi
 

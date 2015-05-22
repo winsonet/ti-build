@@ -1,7 +1,5 @@
 #!/bin/bash
 PATH_HERE=`pwd`
-FONT_RED='\033[0;31m'
-FONT_NO_COLOR='\033[0m'
 SHELL_TI=`which ti`
 SHELL_ADB=`which adb`
 
@@ -127,12 +125,12 @@ show_help ()
 }
 
 hash ${SHELL_TI} > /dev/null 2>&1 || {
-    echo "[${FONT_RED}FAIL${FONT_NO_COLOR}] ti not installed"
+    echo "[FAIL] ti not installed"
     exit
 }
 
 hash ${SHELL_ADB} > /dev/null 2>&1 || {
-    echo "[${FONT_RED}FAIL${FONT_NO_COLOR}] adb not installed"
+    echo "[FAIL] adb not installed"
     exit
 }
 
